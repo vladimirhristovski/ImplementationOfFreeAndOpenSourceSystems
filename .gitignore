@@ -1,2 +1,3 @@
-.gitignore
 .idea
+LAB3/vendor
+LAB3/composer.lock
