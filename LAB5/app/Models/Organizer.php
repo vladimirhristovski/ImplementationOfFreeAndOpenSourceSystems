@@ -13,7 +13,7 @@ class Organizer extends Model
         'phone',
     ];
 
-    public function invoices(): HasMany
+    public function events(): HasMany
     {
         return $this->hasMany(Event::class);
     }

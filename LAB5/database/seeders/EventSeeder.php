@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\EventTypeEnum;
-use App\Models\Organizer;
 use App\Models\Event;
+use App\Models\Organizer;
 use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 
@@ -15,6 +15,7 @@ class EventSeeder extends Seeder
      */
     public function run(): void
     {
+
         $faker = Faker::create();
 
         $organizers = Organizer::all();

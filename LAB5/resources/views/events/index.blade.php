@@ -4,16 +4,8 @@
     <h1>Events</h1>
 
     <form method="GET" action="{{ route('events.index') }}">
-        <label for="type">Filter by Type:</label>
-        <select name="type" id="type">
-            <option value="{{null}}">All</option>
-            @foreach(\App\Enums\EventTypeEnum::cases() as $type)
-                <option value="{{ $type->value }}" {{ request('type') == $type->value ? 'selected' : '' }}>
-                    {{ ucfirst($type->value) }}
-                </option>
-            @endforeach
-        </select>
-        <button type="submit">Filter</button>
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search...">
+        <button type="submit">Search</button>
     </form>
 
     <a href="{{ route('events.create') }}">

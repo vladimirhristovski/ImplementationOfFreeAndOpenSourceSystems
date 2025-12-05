@@ -15,7 +15,7 @@ class Event extends Model
         'date',
     ];
 
-    public function client(): BelongsTo
+    public function organizer(): BelongsTo
     {
         return $this->belongsTo(Organizer::class);
     }

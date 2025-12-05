@@ -21,10 +21,8 @@ class EventController extends Controller
     {
         $events = Event::query()
             ->with('organizer')
-            ->when(
-                $request->get('type') !== null,
-                fn($query) => $query->where('type', $request->get('type'))
-            )
+            ->when($request->has('search'),
+                fn($query) => $query->where('name', 'like', '%' . $request->get('search') . '%'))
             ->latest()
             ->paginate(10);
 

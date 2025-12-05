@@ -1,8 +1,10 @@
 <?php
 
 namespace App\Http\Requests\Event;
-
+use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Enums\EventTypeEnum;
+
 
 class EventUpdateRequest extends FormRequest
 {
