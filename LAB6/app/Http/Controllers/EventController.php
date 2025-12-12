@@ -2,102 +2,61 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Event\EventStoreRequest;
-use App\Http\Requests\Event\EventUpdateRequest;
-use App\Models\Organizer;
-use App\Models\Event;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Contracts\View\View;
-use Illuminate\Foundation\Application;
-use Illuminate\Http\RedirectResponse;
+use App\Http\Resources\EventResource;
+use App\Repositories\EventRepositoryInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class EventController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request): View|Factory|Application
-    {
-        $events = Event::query()
-            ->with('organizer')
-            ->when($request->has('search'),
-                fn($query) => $query->where('name', 'like', '%' . $request->get('search') . '%'))
-            ->latest()
-            ->paginate(10);
+    protected EventRepositoryInterface $eventRepository;
 
-        return view('events/index', compact('events'));
+    public function __construct(EventRepositoryInterface $eventRepository)
+    {
+        $this->eventRepository = $eventRepository;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(): View|Factory|Application
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $organizers = Organizer::query()
-            ->get();
+        $events = $this->eventRepository->searchAndPaginate(
+            search: $request->get('search'),
+            perPage: 10
+        );
 
-        return view('events/create', compact('organizers'));
+        return EventResource::collection($events);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(EventStoreRequest $request): RedirectResponse
+
+    public function store(Request $request): EventResource
     {
-        Event::query()
-            ->create($request->validated());
+        $data = $request->all();
+        $event = $this->eventRepository->create($data);
 
-        return redirect()
-            ->route('events.index')
-            ->with('success', 'Event created successfully.');
-
+        return EventResource::make($event);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Event $event): View|Factory|Application
+    public function show(string $id): EventResource
     {
-        $event->loadMissing('organizer');
+        $event = $this->eventRepository->find($id);
 
-        return view('events.show', compact('event'));
+        return EventResource::make($event);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Event $event): View|Factory|Application
+    public function update(Request $request, string $id): EventResource
     {
-        $organizers = Organizer::query()
-            ->get();
+        $data = $request->all();
+        $event = $this->eventRepository->find($id);
+        $event = $this->eventRepository->update($event, $data);
 
-        return view('events/edit', compact('event', 'organizers'));
-
+        return EventResource::make($event);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(EventUpdateRequest $request, Event $event): RedirectResponse
+    public function destroy($id): JsonResponse
     {
-        $event->update($request->validated());
+        $event = $this->eventRepository->find($id);
+        $this->eventRepository->delete($id);
 
-        return redirect()
-            ->route('events.index')
-            ->with('success', 'Event updated successfully.');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Event $event): RedirectResponse
-    {
-        $event->delete();
-
-        return redirect()
-            ->route('events.index')
-            ->with('success', 'Event deleted successfully.');
-
+        return response()->json(null, 204);
     }
 }

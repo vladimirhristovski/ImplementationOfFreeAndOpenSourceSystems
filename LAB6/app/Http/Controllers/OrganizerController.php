@@ -2,92 +2,62 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Organizer\OrganizerStoreRequest;
-use App\Http\Requests\Organizer\OrganizerUpdateRequest;
-use App\Models\Organizer;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Contracts\View\View;
-use Illuminate\Foundation\Application;
-use Illuminate\Http\RedirectResponse;
+use App\Http\Resources\EventResource;
+use App\Http\Resources\OrganizerResource;
+use App\Repositories\OrganizerRepositoryInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class OrganizerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request): View|Factory|Application
-    {
-        $organizers = Organizer::query()
-            ->when($request->has('search'),
-                fn($query) => $query->where('full_name', 'like', '%' . $request->get('search') . '%'))
-            ->latest()
-            ->paginate(10);
+    protected OrganizerRepositoryInterface $organizerRepository;
 
-        return view('organizers/index', compact('organizers'));
+    public function __construct(OrganizerRepositoryInterface $organizerRepository)
+    {
+        $this->organizerRepository = $organizerRepository;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(): View|Factory|Application
+    public function index(Request $request): AnonymousResourceCollection
     {
-        return view('organizers/create');
+        $organizers = $this->organizerRepository->searchAndPaginate(
+            search: $request->get('search'),
+            perPage: 10
+        );
+
+        return OrganizerResource::collection($organizers);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(OrganizerStoreRequest $request): RedirectResponse
-    {
-        Organizer::query()
-            ->create($request->validated());
 
-        return redirect()
-            ->route('organizers.index')
-            ->with('success', 'Organizer created successfully.');
+    public function store(Request $request): OrganizerResource
+    {
+        $data = $request->all();
+        $organizer = $this->organizerRepository->create($data);
+
+        return OrganizerResource::make($organizer);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Organizer $organizer): View|Factory|Application
+    public function show(string $id): OrganizerResource
     {
-        $organizer->loadMissing('events');
+        $organizer = $this->organizerRepository->find($id);
 
-        return view('organizers/show', compact('organizer'));
+        return OrganizerResource::make($organizer);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Organizer $organizer): View|Factory|Application
+    public function update(Request $request, string $id): OrganizerResource
     {
-        return view('organizers/edit', compact('organizer'));
+        $data = $request->all();
+        $organizer = $this->organizerRepository->find($id);
+        $organizer = $this->organizerRepository->update($organizer, $data);
+
+        return OrganizerResource::make($organizer);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(OrganizerUpdateRequest $request, Organizer $organizer): RedirectResponse
+    public function destroy($id): JsonResponse
     {
-        $organizer->update($request->validated());
+        $organizer = $this->organizerRepository->find($id);
+        $this->organizerRepository->delete($id);
 
-        return redirect()
-            ->route('organizers.index')
-            ->with('success', 'Organizer updated successfully.');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Organizer $organizer): RedirectResponse
-    {
-        $organizer->events()->delete();
-        $organizer->delete();
-
-        return redirect()
-            ->route('organizers.index')
-            ->with('success', 'Organizer deleted successfully.');
+        return response()->json(null, 204);
     }
 }

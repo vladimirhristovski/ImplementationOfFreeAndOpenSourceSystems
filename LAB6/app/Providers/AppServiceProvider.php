@@ -6,6 +6,10 @@ use App\Models\Organizer;
 use App\Observers\OrganizerObserver;
 use App\Models\Event;
 use App\Observers\EventObserver;
+use App\Repositories\OrganizerRepository;
+use App\Repositories\OrganizerRepositoryInterface;
+use App\Repositories\EventRepository;
+use App\Repositories\EventRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -15,7 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(OrganizerRepositoryInterface::class, OrganizerRepository::class);
+        $this->app->singleton(EventRepositoryInterface::class, EventRepository::class);
+
     }
 
     /**
